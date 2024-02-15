@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+// Domain Pricing represents the response of the
+// domain pricing API
 type DomainPricing struct {
 	Status  string `json:"status"`
 	Pricing map[string] struct {
@@ -22,18 +24,22 @@ type UpdateNameServerOptions struct {
 	Domain		string		`json:"-"`
 }
 
+// Type to represent yes or no
 type BooleanType string
 const (
 	Yes	BooleanType = "yes"
 	No	BooleanType = "no"
 )
 
+// Constants are the redirect types that can be assigned
+// to a URL Forward
 type ForwardType string
 const (
 	Temporary	ForwardType = "temporary"
 	Permanent	ForwardType = "permanent"
 )
 
+// Options for creating a URL Forward
 type URLForwardOptions struct {
 	*Keys
 	// [Optional] A subdomain that you would like to add email forwarding for.
@@ -68,6 +74,7 @@ type URLForward	struct {
 	Wildcard	BooleanType	`json:"wildcard"`
 }
 
+// Domain represents a second level domain owned by the account
 type Domain struct {
 	Domain       string `json:"domain"`
 	Status       string `json:"status"`
@@ -80,6 +87,7 @@ type Domain struct {
 	NotLocal     int    `json:"notLocal"`
 }
 
+// Checks default domain pricing information for all supported TLDs.
 func (c *Client) GetDomainPricing(ctx context.Context) (*DomainPricing, error) {
 	request := c.resty.NewRequest().SetContext(ctx)
 	response, err := request.SetResult(&DomainPricing{}).Get("/pricing/get")
@@ -100,6 +108,7 @@ func (c *Client) GetDomainPricing(ctx context.Context) (*DomainPricing, error) {
 	return nil,errors.New("error data received is not in correct format")
 }
 
+// Update the authoritative nameservers for the specified domain
 func (c *Client) UpdateNameServers(ctx context.Context, opts UpdateNameServerOptions) error {
 	req := c.resty.NewRequest().SetContext(ctx)
 
@@ -129,6 +138,7 @@ func (c *Client) UpdateNameServers(ctx context.Context, opts UpdateNameServerOpt
 	return nil
 }
 
+// Get Authoritative nameservers listed at the registry for the specified domain
 func (c *Client) GetNameServers(ctx context.Context, domain string, keys *Keys) ([]string,error) {
 
 	result := struct {
@@ -157,6 +167,7 @@ func (c *Client) GetNameServers(ctx context.Context, domain string, keys *Keys) 
 	return result.NS,nil
 }
 
+// Create a URL forward for the specified domain
 func (c *Client) CreateURLForward(ctx context.Context, opts URLForwardOptions) error {
 
 	req := c.resty.NewRequest().SetContext(ctx)
@@ -179,7 +190,7 @@ func (c *Client) CreateURLForward(ctx context.Context, opts URLForwardOptions) e
 
 	return nil
 }
-
+// Get URL forwarding for the specified domain
 func (c *Client) GetUrlForwards(ctx context.Context, domain string, keys *Keys) ([]URLForward,error) {
 	result := struct {
 		Status		string			`json:"status"`
@@ -207,6 +218,7 @@ func (c *Client) GetUrlForwards(ctx context.Context, domain string, keys *Keys) 
 	return result.Forwards,nil
 }
 
+// Delete the specified URL forwarding for a domain
 func (c *Client) DeleteURLForward(ctx context.Context, domain string, forwardId string, keys *Keys) error {
 	req := c.resty.NewRequest().SetContext(ctx)
 	u := fmt.Sprintf("/domain/deleteUrlForward/%s/%s", domain, forwardId)
@@ -229,6 +241,7 @@ func (c *Client) DeleteURLForward(ctx context.Context, domain string, forwardId 
 	return nil
 }
 
+// Get all domain names for the current account
 func (c *Client) GetAllDomains(ctx context.Context, keys *Keys) ([]Domain,error) {
 	respResult := struct {
 		Status	string	 `json:"status"`

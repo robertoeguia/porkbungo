@@ -9,6 +9,7 @@ import (
 
 type RecordType string
 
+// RecordType constants are the DNS record types that can be created
 const (
 	A     RecordType = "A"
 	MX    RecordType = "MX"
@@ -22,6 +23,7 @@ const (
 	CAA   RecordType = "CAA"
 )
 
+// RecordOptions fields are those accepted by various methods
 type RecordOptions struct {
 	*Keys
 	// ID of DNS record created
@@ -42,6 +44,7 @@ type RecordOptions struct {
 	Priority int   `json:"prio,omitempty"`
 }
 
+// DNS record
 type Record struct {
 	ID			string		`json:"id"`
 	Name		string		`json:"name"`
@@ -127,6 +130,7 @@ func (c *Client) EditRecordsByNameAndType(ctx context.Context, opts RecordOption
 	return nil
 }
 
+// Delete a specific DNS record by it's ID
 func (c *Client) DeleteRecordByID(ctx context.Context, domain string, id int, keys *Keys) error {
 	req := c.resty.NewRequest().SetContext(ctx)
 	u := fmt.Sprintf("/dns/delete/%s/%v",domain,id)
@@ -148,6 +152,8 @@ func (c *Client) DeleteRecordByID(ctx context.Context, domain string, id int, ke
 	return nil
 }
 
+// Delete all records for the domain that match a particular subdomain/name and type.
+// If name is not provided, it will delete records for the root with the specified type
 func (c *Client) DeleteRecordsByNameAndType(ctx context.Context, opts RecordOptions) error {
 	req := c.resty.NewRequest().SetContext(ctx)
 	u := fmt.Sprintf("/dns/deleteByNameType/%s/%s",opts.Domain,opts.Type)
@@ -177,6 +183,7 @@ func (c *Client) DeleteRecordsByNameAndType(ctx context.Context, opts RecordOpti
 	return nil
 }
 
+// Retrieve all editable DNS records for a specified domain
 func (c *Client) GetAllRecords(ctx context.Context, domain string, keys *Keys) ([]Record,error) {
 	result := struct {
 		Status	string	 `json:"status"`
@@ -203,6 +210,7 @@ func (c *Client) GetAllRecords(ctx context.Context, domain string, keys *Keys) (
 	return result.Records,nil
 }
 
+// Retrieve a specific DNS record by the given record ID
 func (c *Client) GetRecordByID(ctx context.Context, domain string, id int, keys *Keys) (*Record,error) {
 	result := struct {
 		Status	string	 `json:"status"`
@@ -233,6 +241,8 @@ func (c *Client) GetRecordByID(ctx context.Context, domain string, id int, keys 
 	return &result.Records[0],nil
 }
 
+// retrieve all records for the domain that match a particular subdomain/name and type.
+// If name is not provided, it will retrieve records for the root with the specified type
 func (c *Client) GetRecordsByNameAndType(ctx context.Context, opts RecordOptions) ([]Record,error) {
 	result := struct {
 		Status	string	 `json:"status"`

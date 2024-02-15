@@ -20,21 +20,27 @@ const (
 )
 
 type Keys struct {
+    // API Key usually starts with 'pk1_'
     APIKey          string      `json:"apikey"`
+    // Secret key, usually starts with 'sk1_'
     SecretAPIKey    string      `json:"secretapikey"`
 }
 
 type APIError struct {
+    // Status indicating the command was not successful
     Status  string  `json:"status"`
+    // Error message
     Message string  `json:"message"`
 }
 
+// Client is a wrapper around the Resty client
 type Client struct {
 	resty       *resty.Client
     keys        *Keys
     useIPv4     bool
 }
 
+// NewClient factory to create a new Client struct
 func NewClient() (client Client) {
     client.resty = resty.New()
     client.useIPv4 = false
@@ -59,6 +65,10 @@ func NewClientWithAPIKeys(keys *Keys) (client Client) {
     return
 }
 
+// SetAPIKeys sets the API keys for to be used
+// with all the requests from this client. The API keys
+// can be overridden for individual requests using the
+// requests options
 func (c *Client) SetAPIKeys(keys *Keys) {
     c.keys = keys
 }
