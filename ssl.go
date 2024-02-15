@@ -19,7 +19,7 @@ type SSLBundle struct {
 	PublicKey			string	`json:"publickey"`
 }
 
-func (c *Client) GetSSLBundle(ctx context.Context, opts *SSLBundleOptions) (*SSLBundle,error)  {
+func (c *Client) GetSSLBundle(ctx context.Context, opts SSLBundleOptions) (*SSLBundle,error)  {
 	req := c.resty.NewRequest().SetContext(ctx).SetResult(&SSLBundle{})
 	u := fmt.Sprintf("/ssl/retrieve/%s",opts.Domain)
 

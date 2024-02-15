@@ -49,7 +49,9 @@ func NewClient() (client Client) {
     return
 }
 
-func NewClientAPIKeys(keys *Keys) (client Client) {
+// NewClient factory to create a new client with the
+// the specified API keys
+func NewClientWithAPIKeys(keys *Keys) (client Client) {
     client = NewClient()
 
     client.keys = keys

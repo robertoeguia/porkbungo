@@ -52,13 +52,32 @@ type URLForwardOptions struct {
 	Domain		string	`json:"-"`
 }
 
+// URL forward returned from porkbun API
 type URLForward	struct {
-	Id			string		`json:"id"`
+	// Subdomain id
+	Id			string	`json:"id"`
+	// Name of subdomain
 	Subdomain	string	`json:"subdomain"`
+	// URL forwarding destination
 	Location	string	`json:"location"`
-	Type		string	`json:"type"`
-	IncludePath	string	`json:"includePath"`
-	Wildcard	string	`json:"wildcard"`
+	// Type of forward temporary or permanent
+	Type		ForwardType	`json:"type"`
+	// Whether URI path is included in redirection
+	IncludePath	BooleanType	`json:"includePath"`
+	//Forward all subdomains of this domain/subdomain
+	Wildcard	BooleanType	`json:"wildcard"`
+}
+
+type Domain struct {
+	Domain       string `json:"domain"`
+	Status       string `json:"status"`
+	TLD          string `json:"tld"`
+	CreateDate   string `json:"createDate"`
+	ExpireDate   string `json:"expireDate"`
+	SecurityLock string `json:"securityLock"`
+	WhoisPrivacy string `json:"whoisPrivacy"`
+	AutoRenew    int    `json:"autoRenew,string"`
+	NotLocal     int    `json:"notLocal"`
 }
 
 func (c *Client) GetDomainPricing(ctx context.Context) (*DomainPricing, error) {
@@ -90,7 +109,7 @@ func (c *Client) UpdateNameServers(ctx context.Context, opts UpdateNameServerOpt
 
 	req.SetResult(&result)
 
-	u := fmt.Sprintf("/domain/updateNs/%v", opts.Domain)
+	u := fmt.Sprintf("/domain/updateNs/%s", opts.Domain)
 
 	if opts.Keys == nil {
 		opts.Keys = c.keys
@@ -141,7 +160,7 @@ func (c *Client) GetNameServers(ctx context.Context, domain string, keys *Keys) 
 func (c *Client) CreateURLForward(ctx context.Context, opts URLForwardOptions) error {
 
 	req := c.resty.NewRequest().SetContext(ctx)
-	u := fmt.Sprintf("/domain/addUrlForward/%v", opts.Domain)
+	u := fmt.Sprintf("/domain/addUrlForward/%s", opts.Domain)
 
 	if opts.Keys == nil {
 		opts.Keys = c.keys
@@ -168,7 +187,7 @@ func (c *Client) GetUrlForwards(ctx context.Context, domain string, keys *Keys) 
 	}{}
 
 	req := c.resty.NewRequest().SetContext(ctx).SetResult(&result)
-	u := fmt.Sprintf("/domain/getUrlForwarding/%v", domain)
+	u := fmt.Sprintf("/domain/getUrlForwarding/%s", domain)
 
 	if keys == nil {
 		keys = c.keys
@@ -208,4 +227,57 @@ func (c *Client) DeleteURLForward(ctx context.Context, domain string, forwardId 
 	}
 
 	return nil
+}
+
+func (c *Client) GetAllDomains(ctx context.Context, keys *Keys) ([]Domain,error) {
+	respResult := struct {
+		Status	string	 `json:"status"`
+		Domains	[]Domain `json:"domains"`
+	}{}
+
+	body := struct {
+		Keys
+		Start	int	`json:"start"`
+	}{}
+
+	if keys == nil {
+		body.Keys = *c.keys
+	} else {
+		body.Keys = *keys
+	}
+	body.Start = 0
+
+	u := "/domain/listAll"
+	req := c.resty.NewRequest().SetContext(ctx).SetResult(&respResult)
+
+	result := make([]Domain,0)
+	
+	req.SetBody(body)
+	resp,err := req.Post(u)
+
+	// TODO: Turn this into reusable function
+	if err != nil || resp.StatusCode() != 200 {
+		if err == nil {
+			e,_ := resp.Error().(*APIError)
+			err = errors.New(e.Message)
+		}
+		return result,err
+	}
+
+	for len(respResult.Domains) > 0 {
+		result = append(result, respResult.Domains...)
+
+		body.Start += 1000
+		req.SetBody(body)
+
+		resp,err = req.Post(u)
+		if err != nil || resp.StatusCode() != 200 {
+			if err == nil {
+				e,_ := resp.Error().(*APIError)
+				err = errors.New(e.Message)
+			}
+			return result,err
+		}
+	} 
+	return result,nil
 }
